@@ -1,0 +1,9 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# ScratchPad
+
+## Section
+
+```elixir
+IO.puts("HELLO WORLD")
+```
