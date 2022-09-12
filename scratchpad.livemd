@@ -7,3 +7,31 @@
 ```elixir
 IO.puts("HELLO WORLD")
 ```
+
+<!-- livebook:{"output":true} -->
+
+```
+HELLO WORLD
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+```elixir
+System.version() |> IO.puts()
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+1.14.0
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
