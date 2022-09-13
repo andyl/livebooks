@@ -1,9 +1,15 @@
 # ScratchPad
 
+```elixir
+Mix.install([
+  {:kino_maplibre, "~> 0.1.2"}
+])
+```
+
 ## Overview
 
 ```elixir
-IO.puts("HELLO WORLD")
+IO.puts("HELLO WORLD") |> dbg()
 ```
 
 ```elixir
@@ -12,6 +18,12 @@ System.version() |> IO.puts()
 
 ```elixir
 x = 1
+```
+
+<!-- livebook:{"attrs":{},"kind":"Elixir.KinoMapLibre.MapCell","livebook_object":"smart_cell"} -->
+
+```elixir
+MapLibre.new()
 ```
 
 ## Section 1
