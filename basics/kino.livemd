@@ -1,0 +1,30 @@
+# Kino Examples
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.6.2"}
+])
+```
+
+## Kino.Input
+
+```elixir
+who = Kino.Input.text("Your name")
+```
+
+```elixir
+"Hello #{Kino.Input.read(who)}"
+```
+
+## Kino.ETS
+
+```elixir
+# :ets.new(:data1, [:ordered_set, :named_table])
+:ets.new(:data1, [:ordered_set])
+:ets.insert(:data1, {"555-1234", "Sue"})
+:ets.insert(:data1, {"566-1234", "Jim"})
+```
+
+```elixir
+Kino.ETS.new(:data1)
+```

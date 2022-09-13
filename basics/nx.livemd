@@ -1,0 +1,33 @@
+# Nx
+
+```elixir
+Mix.install([
+  {:nx, "~> 0.3.0"}
+])
+```
+
+## Tensor Creation
+
+```elixir
+data = [[1, 2], [3, 4], [5, 6]]
+tensor = data |> Nx.tensor()
+```
+
+## Tensor Operations
+
+```elixir
+tensor |> Nx.to_heatmap()
+```
+
+```elixir
+tensor |> Nx.shape()
+```
+
+```elixir
+tensor |> Nx.exp()
+```
+
+```elixir
+# softmax
+Nx.divide(Nx.exp(tensor), Nx.sum(Nx.exp(tensor)))
+```
