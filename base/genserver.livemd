@@ -1,0 +1,107 @@
+# GenServer SSD
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.6.2"},
+  {:kino_vega_lite, "~> 0.1.1"}
+])
+```
+
+## Sequence Diagram Generator
+
+````elixir
+defmodule GenServerSSD do
+  def draw_call(frame, msg, {origin, _}, dest, state),
+    do: update(frame, msg, origin, dest, state, :call)
+
+  def draw_cast(frame, msg, dest, state), do: update(frame, msg, dest, dest, state, :cast)
+  def draw_info(frame, msg, dest, state), do: update(frame, msg, dest, dest, state, :info)
+
+  defp update(frame, msg, origin, dest, state, type) do
+    message = handle_input(msg, origin, dest, type)
+    messages = Map.get(state, :ssd_messages, []) ++ [message]
+
+    Kino.Frame.clear(frame)
+    Kino.Frame.append(frame, Kino.Markdown.new(mermaid(messages)))
+
+    Map.put(state, :ssd_messages, messages)
+  end
+
+  defp handle_input(msg, origin, dest, type) do
+    msg = inspect(msg)
+    origin = sanitize_pid(origin)
+    dest = sanitize_pid(dest)
+    {msg, origin, dest, type}
+  end
+
+  defp sanitize_pid(pid) do
+    [_, pid] = Regex.run(~r/#PID<(.*)>/, inspect(pid))
+    pid
+  end
+
+  defp mermaid(messages) do
+    messages
+    |> Enum.map(fn
+      {msg, origin, dest, :call} -> "#{origin} ->> #{dest}: #{msg}"
+      {msg, origin, dest, :cast} -> "#{origin} -->> #{dest}: #{msg}"
+      {msg, origin, dest, :info} -> "#{origin} -->> #{dest}: #{msg}"
+    end)
+    |> Enum.join("\n")
+    |> then(
+      &"""
+      ```mermaid
+      sequenceDiagram
+      #{&1}
+      ```
+      """
+    )
+  end
+end
+````
+
+```elixir
+defmodule Test do
+  use GenServer
+  import GenServerSSD
+
+  def start_link(frame), do: GenServer.start_link(__MODULE__, %{frame: frame}, name: __MODULE__)
+
+  @impl true
+  def init(state), do: {:ok, state}
+
+  @impl true
+  def handle_call(msg, origin, %{frame: frame} = state) do
+    state = draw_call(frame, msg, origin, self(), state)
+    {:reply, :ok, state}
+  end
+
+  @impl true
+  def handle_cast(msg, %{frame: frame} = state) do
+    state = draw_cast(frame, msg, self(), state)
+    {:noreply, state}
+  end
+
+  @impl true
+  def handle_info(msg, %{frame: frame} = state) do
+    state = draw_info(frame, msg, self(), state)
+    {:noreply, state}
+  end
+end
+```
+
+```elixir
+frame = Kino.Frame.new()
+Test.start_link(frame)
+
+Enum.each(1..5, fn _ ->
+  Task.start(fn ->
+    case Enum.random(0..2) do
+      0 -> GenServer.call(Test, :call)
+      1 -> GenServer.cast(Test, :cast)
+      2 -> send(Test, :info)
+    end
+  end)
+end)
+
+frame
+```
