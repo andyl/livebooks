@@ -1,0 +1,102 @@
+# Livebook 0.7 Features
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"}
+])
+```
+
+## Blog Post
+
+Examples from the [LiveBook Blog](https://news.livebook.dev/whats-new-in-livebook-0.7-2wOPsY).
+
+## Secrets
+
+asdf
+
+```elixir
+secret_data = System.fetch_env!("LB_SECRET")
+IO.puts(secret_data)
+```
+
+## Visualization
+
+```elixir
+parent = self()
+
+Kino.Process.render_seq_trace(fn ->
+  child =
+    spawn(fn ->
+      receive do
+        :ping -> send(parent, :pong)
+      end
+    end)
+
+  send(child, :ping)
+
+  receive do
+    :pong -> :ponged!
+  end
+end)
+```
+
+```elixir
+{:ok, supervisor_pid} =
+  Supervisor.start_link(
+    [
+      {Task, fn -> Process.sleep(:infinity) end},
+      {Agent, fn -> [] end}
+    ],
+    strategy: :one_for_one
+  )
+
+Kino.Process.render_sup_tree(supervisor_pid)
+```
+
+```elixir
+supervisor_pid
+```
+
+## Pipeline Debugging
+
+```elixir
+"Elixir is cool!"
+|> String.trim_trailing("!")
+|> String.split()
+|> List.first()
+|> dbg()
+```
+
+## Table Display
+
+```elixir
+data = [
+  %{id: 1, name: "Elixir", website: "https://elixir-lang.org"},
+  %{id: 2, name: "Erlang", website: "https://www.erlang.org"}
+]
+
+Kino.Layout.tabs(
+  Table: Kino.DataTable.new(data),
+  Raw: data
+)
+```
+
+```elixir
+urls = [
+  "https://images.unsplash.com/photo-1603203040743-24aced6793b4?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&h=580&q=80",
+  "https://images.unsplash.com/photo-1578339850459-76b0ac239aa2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&h=580&q=80",
+  "https://images.unsplash.com/photo-1633479397973-4e69efa75df2?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&h=580&q=80",
+  "https://images.unsplash.com/photo-1597838816882-4435b1977fbe?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&h=580&q=80",
+  "https://images.unsplash.com/photo-1629778712393-4f316eee143e?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&h=580&q=80",
+  "https://images.unsplash.com/photo-1638667168629-58c2516fbd22?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=580&h=580&q=80"
+]
+
+images =
+  for {url, i} <- Enum.with_index(urls, 1) do
+    image = Kino.Markdown.new("![](#{url})")
+    label = Kino.Markdown.new("**Image #{i}**")
+    Kino.Layout.grid([image, label], boxed: true)
+  end
+
+Kino.Layout.grid(images, columns: 3)
+```

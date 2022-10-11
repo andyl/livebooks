@@ -1,0 +1,141 @@
+# Untitled notebook
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.7.0"},
+  {:kino_vega_lite, "~> 0.1.4"},
+  {:nx, "~> 0.3.0"},
+  {:evision, "~> 0.1.9"},
+  {:explorer, "~> 0.3.1"},
+  {:download, "~> 0.0.4"}
+])
+```
+
+## Elixir
+
+```elixir
+System.version() |> IO.puts()
+alias Explorer.DataFrame, as: DF
+alias Explorer.Series, as: S
+alias Evision, as: OpenCV
+alias VegaLite, as: Vl
+```
+
+## Module
+
+```elixir
+defmodule Helper do
+  def download!(url, save_as) do
+    unless File.exists?(save_as) do
+      Download.from(url, path: save_as)
+    end
+
+    save_as
+  end
+
+  def show_image(mat) do
+    OpenCV.imencode!(".png", mat)
+    |> IO.iodata_to_binary()
+    |> Kino.Image.new(:png)
+  end
+
+  def show_image_from_path(image_path) do
+    image_path
+    |> File.read!()
+    |> Kino.Image.new(:jpeg)
+  end
+end
+```
+
+```elixir
+# Nx Pipeline 
+[1, 2, 3]
+|> Nx.tensor()
+|> Nx.multiply(3)
+|> Nx.tile([2, 2])
+|> Nx.mean()
+|> dbg()
+```
+
+```elixir
+image_path = "dog.jpg"
+
+"https://raw.githubusercontent.com/pjreddie/darknet/master/data/dog.jpg"
+|> Helper.download!(image_path)
+|> Helper.show_image_from_path()
+```
+
+```elixir
+{:ok, move} =
+  [
+    [1, 0, 100],
+    [0, 1, 50]
+  ]
+  |> Nx.tensor(type: {:f, 32})
+  |> OpenCV.Nx.to_mat()
+
+{:ok, rotation} = OpenCV.getRotationMatrix2D([512 / 2, 512 / 2], 90, 1)
+
+image_path
+|> OpenCV.imread!()
+|> OpenCV.blur!([9, 9])
+|> OpenCV.warpAffine!(move, [512, 512])
+|> OpenCV.warpAffine!(rotation, [512, 512])
+|> OpenCV.rectangle!([50, 10], [125, 60], [255, 0, 0])
+|> OpenCV.ellipse!([300, 300], [100, 200], 30, 0, 360, [255, 255, 0], thickness: 3)
+|> Helper.show_image()
+|> dbg()
+```
+
+```elixir
+iris = Explorer.Datasets.iris()
+```
+
+```elixir
+iris
+|> DF.filter_with(&S.equal(&1["species"], "Iris-virginica"))
+|> DF.select(["sepal_length", "sepal_width", "petal_length", "petal_width"])
+|> DF.arrange(desc: "sepal_width")
+|> DF.rename(["ガクの長さ", "ガクの幅", "花弁の長さ", "花弁の幅"])
+|> DF.to_rows()
+|> Kino.DataTable.new()
+|> dbg()
+```
+
+```elixir
+get_values = fn df, col ->
+  df
+  |> DF.pull(col)
+  |> S.to_list()
+end
+
+scatter = fn df, x_col, y_col ->
+  x = get_values.(df, x_col)
+  y = get_values.(df, y_col)
+  class = get_values.(df, "species")
+
+  Vl.new(width: 300, height: 300)
+  |> Vl.data_from_values(x: x, y: y, class: class)
+  |> Vl.mark(:point)
+  |> Vl.encode_field(:x, "x",
+    type: :quantitative,
+    scale: [domain: [Enum.min(x), Enum.max(x)]],
+    title: x_col
+  )
+  |> Vl.encode_field(:y, "y",
+    type: :quantitative,
+    scale: [domain: [Enum.min(y), Enum.max(y)]],
+    title: y_col
+  )
+  |> Vl.encode_field(:color, "class", type: :nominal)
+end
+```
+
+```elixir
+iris
+|> DF.filter_with(&S.greater(&1["sepal_length"], 3))
+|> DF.filter_with(&S.greater(&1["petal_length"], 3))
+|> DF.filter_with(&S.equal(&1["species"], "Iris-virginica"))
+|> scatter.("sepal_length", "petal_length")
+|> dbg()
+```
