@@ -2,7 +2,8 @@
 
 ```elixir
 Mix.install([
-  {:axon, github: "elixir-nx/axon"},
+  # {:axon, github: "elixir-nx/axon"},
+  {:axon, "~> 0.2.0"},
   {:nx, "~> 0.3.0", override: true},
   {:exla, "~> 0.3.0"},
   {:kino_vega_lite, "~> 0.1.3"}
