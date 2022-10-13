@@ -1,0 +1,22 @@
+# NX Examples
+
+```elixir
+Mix.install([
+  {:nx, "~> 0.3.0"}
+])
+```
+
+## Basic Tensor Creation and Manipulation
+
+```elixir
+t = Nx.tensor([[1, 2], [3, 4]])
+```
+
+```elixir
+Nx.shape(t)
+```
+
+```elixir
+xt = Nx.exp(t)
+result = Nx.divide(xt, Nx.sum(xt))
+```

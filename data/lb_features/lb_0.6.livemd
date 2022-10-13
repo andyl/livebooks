@@ -1,0 +1,39 @@
+# Livebook 0.6 Features
+
+```elixir
+Mix.install([
+  {:kino_vega_lite, "~> 0.1.4"},
+  {:explorer, "~> 0.3.1"}
+])
+```
+
+## New Features
+
+```elixir
+iris = Explorer.Datasets.iris()
+```
+
+```elixir
+iris
+```
+
+<!-- livebook:{"attrs":{"chart_title":"Super Chart","height":null,"layers":[{"chart_type":"point","color_field":"species","color_field_aggregate":null,"color_field_type":"nominal","data_variable":"iris","x_field":"sepal_length","x_field_aggregate":null,"x_field_type":"quantitative","y_field":"sepal_width","y_field_aggregate":null,"y_field_type":"quantitative"}],"vl_alias":"Elixir.VegaLite","width":600},"kind":"Elixir.KinoVegaLite.ChartCell","livebook_object":"smart_cell"} -->
+
+```elixir
+VegaLite.new(width: 600, title: "Super Chart")
+|> VegaLite.data_from_values(iris, only: ["sepal_length", "sepal_width", "species"])
+|> VegaLite.mark(:point)
+|> VegaLite.encode_field(:x, "sepal_length", type: :quantitative)
+|> VegaLite.encode_field(:y, "sepal_width", type: :quantitative)
+|> VegaLite.encode_field(:color, "species", type: :nominal)
+```
+
+<!-- Learn more at https://mermaid-js.github.io/mermaid -->
+
+```mermaid
+graph TD;
+  A-->B;
+  A-->C;
+  B-->D;
+  C-->D;
+```
