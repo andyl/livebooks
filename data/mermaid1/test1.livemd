@@ -1,0 +1,37 @@
+# Mermaid Test 1
+
+## Intro
+
+These examples come from the book "Creating Software with Modern Diagramming Techniques"
+
+## Chapter 1
+
+Page 1 - First Diagram
+
+```mermaid
+flowchart LR
+a --> b & c--> d 
+```
+
+<!-- livebook:{"break_markdown":true} -->
+
+Page 3 - Domain Driven Design - Domain Model
+
+```mermaid
+classDiagram
+Title -- Genre
+```
+
+<!-- livebook:{"break_markdown":true} -->
+
+Page 4 - Domain Driven Design Relations
+
+```mermaid
+classDiagram
+Title -- Genre
+Title --* Season : hasMany
+Title --* Review : hasMany
+Title o-- Actor
+
+Season *-- Episode
+```
