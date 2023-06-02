@@ -8,4 +8,7 @@ See [livebook.dev](http://livebook.dev) for more info.
 
 ## How to Upgrade 
 
-TBD
+- Livebook runs locally in a docker container 
+- ~/dks/code_dks/stack/host/dev_host/docker-compose.yml 
+- update version
+- dkc pull && dkc restart
