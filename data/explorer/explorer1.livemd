@@ -1,0 +1,67 @@
+<!-- livebook:{"app_settings":{"access_type":"public","slug":"exp1"}} -->
+
+# Explorer1
+
+```elixir
+Mix.install([
+  {:explorer, "~> 0.5.0"},
+  {:kino, "~> 0.8.0"}
+])
+```
+
+## Overview
+
+Notes from [Ten Minutes to Explorer](https://hexdocs.pm/explorer/exploring_explorer.html)
+
+## Dataset Loading
+
+```elixir
+df = Explorer.Datasets.fossil_fuels()
+```
+
+## Introspection
+
+```elixir
+alias Explorer.DataFrame
+require DataFrame, as: DF
+```
+
+```elixir
+DF.names(df)
+```
+
+```elixir
+DF.dtypes(df)
+```
+
+```elixir
+DF.shape(df)
+```
+
+```elixir
+DF.head(df)
+```
+
+## Query
+
+```elixir
+DF.select(df, ["year", "country"])
+```
+
+```elixir
+DF.select(df, &String.ends_with?(&1, "fuel"))
+```
+
+```elixir
+DF.filter(df, country == "ALGERIA" and year > 2012)
+```
+
+```elixir
+DF.mutate(df, supercol: solid_fuel + cement)
+```
+
+<!-- livebook:{"continue_on_error":true} -->
+
+```elixir
+DF.arrange(df, year)
+```
