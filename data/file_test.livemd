@@ -1,0 +1,22 @@
+<!-- livebook:{"file_entries":[{"name":"Iris.csv","type":"url","url":"https://huggingface.co/datasets/scikit-learn/iris/raw/main/Iris.csv"},{"name":"datasets.bin","type":"attachment"}]} -->
+
+# file test
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.11.0"},
+  {:kino_explorer, "~> 0.1.11"}
+])
+```
+
+## Section
+
+```elixir
+df =
+  Kino.FS.file_path("Iris.csv")
+  |> Explorer.DataFrame.from_csv!()
+```
+
+```elixir
+
+```
