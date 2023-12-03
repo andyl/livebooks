@@ -20,7 +20,7 @@ System.version() |> IO.puts()
 x = 1
 ```
 
-<!-- livebook:{"attrs":{},"kind":"Elixir.KinoMapLibre.MapCell","livebook_object":"smart_cell"} -->
+<!-- livebook:{"attrs":{},"chunks":null,"kind":"Elixir.KinoMapLibre.MapCell","livebook_object":"smart_cell"} -->
 
 ```elixir
 MapLibre.new()

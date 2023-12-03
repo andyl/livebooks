@@ -1,0 +1,61 @@
+# GPU Benchmarks
+
+## Section
+
+```elixir
+Mix.install(
+  [
+    {:nx, "~> 0.6"},
+    {:exla, "~> 0.6"},
+    {:benchee, "~> 1.2"}
+  ]
+  # ,
+  # system_env: %{"XLA_TARGET" => "cuda111"}
+)
+```
+
+```elixir
+defmodule Softmax do
+  import Nx.Defn
+  defn(softmax(n), do: Nx.exp(n) / Nx.sum(Nx.exp(n)))
+end
+```
+
+```elixir
+key = Nx.Random.key(42)
+{tensor, _key} = Nx.Random.uniform(key, shape: {1_000_000})
+
+Benchee.run(
+  %{
+    "JIT with EXLA" => fn ->
+      apply(EXLA.jit(&Softmax.softmax/1), [tensor])
+    end,
+    "Regular Elixir" => fn ->
+      Softmax.softmax(tensor)
+    end
+  },
+  time: 10
+)
+```
+
+```elixir
+Nx.Defn.global_default_options(compiler: EXLA)
+Nx.default_backend(EXLA.Backend)
+```
+
+```elixir
+key = Nx.Random.key(42)
+{tensor, _key} = Nx.Random.uniform(key, shape: {1_000_000})
+
+Benchee.run(
+  %{
+    "JIT with EXLA" => fn ->
+      apply(EXLA.jit(&Softmax.softmax/1), [tensor])
+    end,
+    "Regular Elixir" => fn ->
+      Softmax.softmax(tensor)
+    end
+  },
+  time: 10
+)
+```
