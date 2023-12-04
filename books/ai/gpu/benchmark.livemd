@@ -1,18 +1,27 @@
 # GPU Benchmarks
 
-## Section
-
 ```elixir
-Mix.install(
-  [
-    {:nx, "~> 0.6"},
-    {:exla, "~> 0.6"},
-    {:benchee, "~> 1.2"}
-  ]
-  # ,
-  # system_env: %{"XLA_TARGET" => "cuda111"}
+# NOTE: see environment variables defined in secrets 
+# check installed with nvidia-smi --list-gpus 
+# see https://elixirforum.com/t/compiling-xla-with-cuda-11-2-support-needed/42528 
+
+Mix.install([
+  {:nx, "~> 0.6"},
+  {:exla, "~> 0.6"},
+  {:benchee, "~> 1.2"}
+])
+
+Application.put_env(:exla, :clients,
+  cuda: [platform: :cuda],
+  rocm: [platform: :rocm],
+  tpu: [platform: :tpu],
+  host: [platform: :host]
 )
+
+# Nx.global_default_backend(EXLA.Backend)
 ```
+
+## Section
 
 ```elixir
 defmodule Softmax do
@@ -38,24 +47,4 @@ Benchee.run(
 )
 ```
 
-```elixir
-Nx.Defn.global_default_options(compiler: EXLA)
-Nx.default_backend(EXLA.Backend)
-```
-
-```elixir
-key = Nx.Random.key(42)
-{tensor, _key} = Nx.Random.uniform(key, shape: {1_000_000})
-
-Benchee.run(
-  %{
-    "JIT with EXLA" => fn ->
-      apply(EXLA.jit(&Softmax.softmax/1), [tensor])
-    end,
-    "Regular Elixir" => fn ->
-      Softmax.softmax(tensor)
-    end
-  },
-  time: 10
-)
-```
+<!-- livebook:{"offset":902,"stamp":{"token":"XCP.lP96m_k2U_EP-45zwACx3jtDOVbrZ9p-I_2RtWovIKkvqdpR3gwQy449h4KeGmdPH1BzgT7ig7FZ6To5x1v47XrLrZdcETT_XAm-FcUr2RLzNk3UrNxewgP-7VUfgz7_o_0HMtv6LSm6Ak91lIvt0xFETcwOHw6Rni1adqsOiM-WIMiPxUDK13Rrs5i1xsbv","version":2}} -->
