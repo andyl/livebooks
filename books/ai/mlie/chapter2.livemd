@@ -1,20 +1,40 @@
 # MLIE Chapter 2
 
 ```elixir
-Mix.install([
-  {:nx, "~> 0.6"},
-  {:exla, "~> 0.6"},
-  {:benchee, "~> 1.2"}
-])
+Mix.install(
+  [
+    {:nx, "~> 0.6"},
+    {:exla, "~> 0.6"},
+    {:benchee, "~> 1.2"}
+  ]
+  # config: [
+  #   nx: [
+  #     default_backend: EXLA.Backend,
+  #     default_defn_options: [compiler: EXLA]
+  #   ],
+  #   exla: [
+  #     default_client: :cuda,
+  #     clients: [
+  #       host: [platform: :host],
+  #       cuda: [platform: :cuda]
+  #     ]
+  #   ]
+  # ],
+  # system_env: [
+  #   XLA_TARGET: "cuda120"
+  # ]
+)
 ```
 
 ## Section
 
 ```elixir
+# 39 : Understanding Nx Tensors
 Nx.tensor([1, 2, 3])
 ```
 
 ```elixir
+# 39 
 a = Nx.tensor([[1, 2, 3], [4, 5, 6]])
 b = Nx.tensor(1.0)
 c = Nx.tensor([[[[[[1.0, 2]]]]]])
@@ -24,6 +44,7 @@ dbg(c)
 ```
 
 ```elixir
+# 40 : Tensors Have a Type
 a = Nx.tensor([1, 2, 3])
 b = Nx.tensor([1.0, 2.0, 3.0])
 dbg(a)
@@ -31,22 +52,27 @@ dbg(b)
 ```
 
 ```elixir
+# 42
 Nx.tensor(0.0000000000000000000000000000000000000000000001)
 ```
 
 ```elixir
+# 42 
 Nx.tensor(1.0e-45, type: {:f, 64})
 ```
 
 ```elixir
+# 42
 Nx.tensor(128, type: {:s, 8})
 ```
 
 ```elixir
+# 43 
 Nx.tensor([1.0, 2, 3])
 ```
 
 ```elixir
+# 43 : Tensors have shape 
 a = Nx.tensor([1, 2])
 b = Nx.tensor([[1, 2], [3, 4]])
 c = Nx.tensor([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])
@@ -56,84 +82,104 @@ dbg(c)
 ```
 
 ```elixir
+# 45 
 Nx.tensor(10)
 ```
 
 ```elixir
+# 45 
 Nx.tensor([[1, 2, 3], [4, 5, 6]], names: [:x, :y])
 ```
 
 ```elixir
+# 46 : Tensors Have Data 
 a = Nx.tensor([[1, 2, 3], [4, 5, 6]])
-
 Nx.to_binary(a)
 ```
 
 ```elixir
+# 46
 <<1::64-signed-native, 2::64-signed-native, 3::64-signed-native>>
 |> Nx.from_binary({:s, 64})
 ```
 
 ```elixir
+# 47 
 <<1::64-signed-native, 2::64-signed-native, 3::64-signed-native>>
 |> Nx.from_binary({:s, 64})
 |> Nx.reshape({1, 3})
 ```
 
 ```elixir
+# 48 : Shape and Type Operations 
 a = Nx.tensor([1, 2, 3])
 ```
 
 ```elixir
+# 48
 a
 |> Nx.as_type({:f, 32})
 |> Nx.reshape({1, 3, 1})
 ```
 
 ```elixir
+# 48 
 Nx.bitcast(a, {:f, 64})
 ```
 
 ```elixir
+# 49 : Element-wise Unary Operations 
 a = [-1, -2, -3, 0, 1, 2, 3]
 Enum.map(a, &abs/1)
 ```
 
 ```elixir
+# 49 
 a = Nx.tensor([[[-1, -2, -3], [-4, -5, -6]], [[1, 2, 3], [4, 5, 6]]])
 Nx.abs(a)
 ```
 
 ```elixir
-a = Nx.tensor([[1, 2, 3], [4, 5, 6]])
-b = Nx.tensor([[6, 7, 8], [9, 10, 11]])
+# 50 : Element-wise Binary Operations 
+a = [1, 2, 3]
+b = [4, 5, 6]
+Enum.zip_with(a, b, fn x, y -> x + y end)
 ```
 
 ```elixir
+# 51 
+a = Nx.tensor([[1, 2, 3], [4, 5, 6]])
+b = Nx.tensor([[6, 7, 8], [9, 10, 11]])
 Nx.add(a, b)
 ```
 
 ```elixir
+# 50 
 Nx.multiply(a, b)
 ```
 
 ```elixir
+# 51
 Nx.add(5, Nx.tensor([1, 2, 3]))
 ```
 
 ```elixir
+# 52
 Nx.add(Nx.tensor([1, 2, 3]), Nx.tensor([[4, 5, 6], [7, 8, 9]]))
 ```
 
 ```elixir
+# 52 : Reductions 
 revs = Nx.tensor([85, 76, 42, 34, 46, 23, 52, 99, 22, 32, 85, 51])
 ```
 
 ```elixir
+# 52
 Nx.sum(revs)
 ```
 
 ```elixir
+# 52
 revs =
   Nx.tensor(
     [
@@ -147,14 +193,17 @@ revs =
 ```
 
 ```elixir
+# 53
 Nx.sum(revs, axes: [:year])
 ```
 
 ```elixir
+# 53 
 Nx.sum(revs, axes: [:month])
 ```
 
 ```elixir
+# 56 : Going from def to defn 
 defmodule MyModule do
   import Nx.Defn
 
@@ -165,10 +214,12 @@ end
 ```
 
 ```elixir
+# 57
 Nx.tensor([1, 2, 3]) |> MyModule.adds_one()
 ```
 
 ```elixir
+# 58 
 defmodule Softmax do
   import Nx.Defn
   defn(softmax(n), do: Nx.exp(n) / Nx.sum(Nx.exp(n)))
@@ -176,6 +227,7 @@ end
 ```
 
 ```elixir
+# 58 
 key = Nx.Random.key(42)
 {tensor, _key} = Nx.Random.uniform(key, shape: {1_000_000})
 
@@ -193,8 +245,9 @@ Benchee.run(
 ```
 
 ```elixir
-Nx.Defn.global_default_options(compiler: EXLA)
-Nx.default_backend(EXLA.Backend)
+# 59 
+# Nx.Defn.global_default_options(compiler: EXLA)
+# Nx.default_backend(EXLA.Backend)
 ```
 
 ```elixir

@@ -1,0 +1,51 @@
+# CUDA Tester
+
+```elixir
+# On ubuntu 22.04 using a Thunderbolt eGPU, install these drivers.
+# > sudo ubuntu-drivers install nvidia-driver-525
+# > sudo apt install libcuda-11.7-1
+# > sudo apt install libnvidia-compute-525
+# > sudo apt install nvidia-utils-525
+# > sudo apt install nvidia-utils-525-server
+# > sudo apt install nvidia-cuda-dev nvidia-cuda-toolkit nvidia-cuda-gdb -yq
+# > sudo apt install libcudnn8 -yq
+# > sudo apt install libcudnn8-dev -yq
+# > sudo apt install libcudnn8-samples -yq
+# > sudo snap install nvtop 
+# 
+# test with `nvidia-smi` and `nvtop`
+# 
+Mix.install(
+  [
+    {:nx, "~> 0.6"},
+    {:exla, "~> 0.6"}
+  ],
+  config: [
+    nx: [
+      default_backend: EXLA.Backend,
+      default_defn_options: [compiler: EXLA]
+    ],
+    exla: [
+      default_client: :cuda,
+      clients: [
+        host: [platform: :host],
+        cuda: [platform: :cuda]
+      ]
+    ]
+  ],
+  system_env: [
+    XLA_TARGET: "cuda120"
+  ]
+)
+```
+
+## Section
+
+The next segment should contain output about my GPU ID, cuDNN, and allocating memory, and the tensor should show `EXLA.Backend<cuda:0>`.
+
+```elixir
+Nx.with_default_backend({EXLA.Backend, client: :cuda}, fn ->
+  Nx.iota({10, 10})
+  |> Nx.add(10)
+end)
+```
