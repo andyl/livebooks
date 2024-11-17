@@ -3,26 +3,26 @@
 ```elixir
 Mix.install(
   [
-    {:nx, "~> 0.6"},
-    {:exla, "~> 0.6"},
+    {:nx, "~> 0.9"},
+    {:exla, "~> 0.9"},
     {:benchee, "~> 1.2"}
+  ],
+  config: [
+    nx: [
+      default_backend: EXLA.Backend,
+      # default_defn_options: [compiler: EXLA]
+    ],
+    exla: [
+      default_client: :cuda,
+      clients: [
+        host: [platform: :host],
+        cuda: [platform: :cuda]
+      ]
+    ]
+  ],
+  system_env: [
+    XLA_TARGET: "cuda120"
   ]
-  # config: [
-  #   nx: [
-  #     default_backend: EXLA.Backend,
-  #     default_defn_options: [compiler: EXLA]
-  #   ],
-  #   exla: [
-  #     default_client: :cuda,
-  #     clients: [
-  #       host: [platform: :host],
-  #       cuda: [platform: :cuda]
-  #     ]
-  #   ]
-  # ],
-  # system_env: [
-  #   XLA_TARGET: "cuda120"
-  # ]
 )
 ```
 
@@ -246,11 +246,12 @@ Benchee.run(
 
 ```elixir
 # 59 
-# Nx.Defn.global_default_options(compiler: EXLA)
-# Nx.default_backend(EXLA.Backend)
+Nx.Defn.global_default_options(compiler: EXLA)
+Nx.default_backend(EXLA.Backend)
 ```
 
 ```elixir
+# 60
 key = Nx.Random.key(42)
 {tensor, _key} = Nx.Random.uniform(key, shape: {1_000_000})
 

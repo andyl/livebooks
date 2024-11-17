@@ -1,6 +1,8 @@
 # MLIE Chapter 1
 
 ```elixir
+#29 
+
 Mix.install([
   {:axon, "~> 0.6"},
   {:nx, "~> 0.6"},
@@ -12,11 +14,13 @@ Mix.install([
 ## Section
 
 ```elixir
+#29 
 require Explorer.DataFrame, as: DF
 iris = Explorer.Datasets.iris()
 ```
 
 ```elixir
+#31 
 cols = ~w(sepal_width sepal_length petal_length petal_width)
 
 normalized_iris =
@@ -29,6 +33,7 @@ normalized_iris =
 ```
 
 ```elixir
+#32
 normalized_iris =
   DF.mutate(normalized_iris,
     species: Explorer.Series.cast(species, :category)
@@ -40,11 +45,13 @@ shuffled_normalized_iris = DF.shuffle(normalized_iris)
 ```
 
 ```elixir
+#33
 train_df = DF.slice(shuffled_normalized_iris, 0..119)
 test_df = DF.slice(shuffled_normalized_iris, 120..149)
 ```
 
 ```elixir
+#34
 feature_columns = [
   "sepal_length",
   "sepal_width",
@@ -68,6 +75,7 @@ y_test =
 ```
 
 ```elixir
+#35
 model =
   Axon.input("iris_features", shape: {nil, 4})
   |> Axon.dense(3, activation: :softmax)
@@ -85,8 +93,9 @@ data_stream =
 ```
 
 ```elixir
+#37
 trained_model_state =
-  model
+  model 
   |> Axon.Loop.trainer(:categorical_cross_entropy, :sgd)
   |> Axon.Loop.metric(:accuracy)
   |> Axon.Loop.run(data_stream, %{}, iterations: 500, epochs: 10)
