@@ -3,8 +3,8 @@
 ```elixir
 # 64 : Speaking the Language of Data 
 Mix.install([
-  {:nx, "~> 0.6"},
-  {:exla, "~> 0.6"},
+  # {:nx, "~> 0.6"},
+  {:exla, "== 0.5.0"},
   {:kino, "~> 0.12"},
   {:stb_image, "~> 0.6"},
   {:vega_lite, "~> 0.1"},
@@ -202,7 +202,7 @@ Vl.new(title: title, width: 1440, height: 1080)
 ```
 
 ```elixir
-# 85 : Automatic Defferentiation with defn
+# 85 : Automatic Differentiation with defn
 defmodule GradFun do
   import Nx.Defn
 

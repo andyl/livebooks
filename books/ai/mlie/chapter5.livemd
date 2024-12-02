@@ -2,7 +2,7 @@
 
 ```elixir
 Mix.install([
-  {:scholar, "~> 0.2"},
+  {:scholar, "== 0.2.0"},
   {:nx, "~> 0.6"},
   {:exla, "~> 0.6"},
   {:vega_lite, "~> 0.1"},
@@ -17,7 +17,7 @@ Nx.Defn.default_options(compiler: EXLA)
 ## Section
 
 ```elixir
-# 112 
+# 113  
 m = :rand.uniform() * 10
 b = :random.uniform() * 10
 key = Nx.Random.key(42)

@@ -2,7 +2,7 @@
 
 ```elixir
 Mix.install([
-  {:nx, "~> 0.6"}
+  {:nx, "== 0.5.0"}
 ])
 ```
 
@@ -26,7 +26,8 @@ test_data = Enum.zip(Nx.to_batched(test_x, 1), Nx.to_batched(test_y, 1))
 ```
 
 ```elixir
-# 100 
+# 101 Descending Gradients 
+
 defmodule SGD do
   import Nx.Defn
 
