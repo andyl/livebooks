@@ -81,7 +81,7 @@ function =
   description: "Return JSON object of the current users's relevant information.",
   display_text: nil,
   strict: false,
-  function: #Function<41.18682967/2 in :erl_eval.expr/6>,
+  function: #Function<41.81571850/2 in :erl_eval.expr/6>,
   async: true,
   parameters_schema: nil,
   parameters: []
@@ -158,7 +158,8 @@ messages = [
     role: :system,
     name: nil,
     tool_calls: [],
-    tool_results: nil
+    tool_results: nil,
+    metadata: nil
   },
   %LangChain.Message{
     content: "The current user is requesting a Haiku poem about their favorite animal.",
@@ -168,7 +169,8 @@ messages = [
     role: :user,
     name: nil,
     tool_calls: [],
-    tool_results: nil
+    tool_results: nil,
+    metadata: nil
   }
 ]
 ```
@@ -188,10 +190,9 @@ chat_model = ChatOpenAI.new!(%{model: "gpt-4o", temperature: 1, stream: false})
 <!-- livebook:{"output":true} -->
 
 ```
-%LangChain.ChatModels.ChatOpenAI{
+#LangChain.ChatModels.ChatOpenAI<
   endpoint: "https://api.openai.com/v1/chat/completions",
   model: "gpt-4o",
-  api_key: nil,
   temperature: 1.0,
   frequency_penalty: 0.0,
   reasoning_mode: false,
@@ -206,8 +207,10 @@ chat_model = ChatOpenAI.new!(%{model: "gpt-4o", temperature: 1, stream: false})
   stream_options: nil,
   tool_choice: nil,
   callbacks: [],
-  user: nil
-}
+  user: nil,
+  verbose_api: false,
+  ...
+>
 ```
 
 ## Defining our Application's User Context
@@ -217,13 +220,13 @@ Here we'll define some special context that we want passed through to our `LangC
 In a real application, this might be session based user or account information. It's whatever is relevant to our application that changes how a function should operate or the data it should access.
 
 ```elixir
-context = %{user_id: 2}
+context = %{user_id: 1}
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
-%{user_id: 2}
+%{user_id: 1}
 ```
 
 After trying this with `user_id: 2`, a member who should have a Haiku generated for them, change it to `user_id: 1` to see it be politely denied.
@@ -258,10 +261,9 @@ response.content
 <!-- livebook:{"output":true} -->
 
 ```
-LLM: %LangChain.ChatModels.ChatOpenAI{
+LLM: #LangChain.ChatModels.ChatOpenAI<
   endpoint: "https://api.openai.com/v1/chat/completions",
   model: "gpt-4o",
-  api_key: nil,
   temperature: 1.0,
   frequency_penalty: 0.0,
   reasoning_mode: false,
@@ -276,8 +278,10 @@ LLM: %LangChain.ChatModels.ChatOpenAI{
   stream_options: nil,
   tool_choice: nil,
   callbacks: [],
-  user: nil
-}
+  user: nil,
+  verbose_api: false,
+  ...
+>
 MESSAGES: [
   %LangChain.Message{
     content: "You are a helpful haiku poem generating assistant.\n    ONLY generate a haiku for users with an `account_type` of \"member\".\n    If the user has an `account_type` of \"trial\", say you can't do it,\n    but you would love to help them if they upgrade and become a member.",
@@ -287,7 +291,8 @@ MESSAGES: [
     role: :system,
     name: nil,
     tool_calls: [],
-    tool_results: nil
+    tool_results: nil,
+    metadata: nil
   },
   %LangChain.Message{
     content: "The current user is requesting a Haiku poem about their favorite animal.",
@@ -297,7 +302,8 @@ MESSAGES: [
     role: :user,
     name: nil,
     tool_calls: [],
-    tool_results: nil
+    tool_results: nil,
+    metadata: nil
   }
 ]
 TOOLS: [
@@ -306,7 +312,7 @@ TOOLS: [
     description: "Return JSON object of the current users's relevant information.",
     display_text: nil,
     strict: false,
-    function: #Function<41.18682967/2 in :erl_eval.expr/6>,
+    function: #Function<41.81571850/2 in :erl_eval.expr/6>,
     async: true,
     parameters_schema: nil,
     parameters: []
@@ -323,13 +329,14 @@ SINGLE MESSAGE RESPONSE: %LangChain.Message{
     %LangChain.Message.ToolCall{
       status: :complete,
       type: :function,
-      call_id: "call_2puDjavxfbFQ7uDvrE9vafnZ",
+      call_id: "call_WjtFaZXExud7GFL5bGqXlfNK",
       name: "get_user_info",
       arguments: %{},
       index: nil
     }
   ],
-  tool_results: nil
+  tool_results: nil,
+  metadata: nil
 }
 MESSAGE PROCESSED: %LangChain.Message{
   content: nil,
@@ -342,18 +349,19 @@ MESSAGE PROCESSED: %LangChain.Message{
     %LangChain.Message.ToolCall{
       status: :complete,
       type: :function,
-      call_id: "call_2puDjavxfbFQ7uDvrE9vafnZ",
+      call_id: "call_WjtFaZXExud7GFL5bGqXlfNK",
       name: "get_user_info",
       arguments: %{},
       index: nil
     }
   ],
-  tool_results: nil
+  tool_results: nil,
+  metadata: nil
 }
 EXECUTING FUNCTION: "get_user_info"
 
-09:10:30.474 [debug] Executing function "get_user_info"
-FUNCTION RESULT: "{\"name\":\"Joan Jett\",\"user_id\":2,\"account_type\":\"member\",\"favorite_animal\":\"Aardvark\"}"
+15:16:07.758 [debug] Executing function "get_user_info"
+FUNCTION RESULT: "{\"name\":\"Michael Johnson\",\"user_id\":1,\"account_type\":\"trial\",\"favorite_animal\":\"Horse\"}"
 TOOL RESULTS: %LangChain.Message{
   content: nil,
   processed_content: nil,
@@ -365,44 +373,46 @@ TOOL RESULTS: %LangChain.Message{
   tool_results: [
     %LangChain.Message.ToolResult{
       type: :function,
-      tool_call_id: "call_2puDjavxfbFQ7uDvrE9vafnZ",
+      tool_call_id: "call_WjtFaZXExud7GFL5bGqXlfNK",
       name: "get_user_info",
-      content: "{\"name\":\"Joan Jett\",\"user_id\":2,\"account_type\":\"member\",\"favorite_animal\":\"Aardvark\"}",
+      content: "{\"name\":\"Michael Johnson\",\"user_id\":1,\"account_type\":\"trial\",\"favorite_animal\":\"Horse\"}",
       processed_content: nil,
       display_text: nil,
-      is_error: false
+      is_error: false,
+      options: nil
     }
-  ]
+  ],
+  metadata: nil
 }
 SINGLE MESSAGE RESPONSE: %LangChain.Message{
-  content: "Long snout seeking ants,  \nNight wanderer of moonlight,  \nAardvark's gentle grace.",
+  content: "I'm sorry, but I can only create a haiku for members. I'd love to help you with a haiku if you upgrade and become a member!",
   processed_content: nil,
   index: 0,
   status: :complete,
   role: :assistant,
   name: nil,
   tool_calls: [],
-  tool_results: nil
+  tool_results: nil,
+  metadata: nil
 }
 MESSAGE PROCESSED: %LangChain.Message{
-  content: "Long snout seeking ants,  \nNight wanderer of moonlight,  \nAardvark's gentle grace.",
+  content: "I'm sorry, but I can only create a haiku for members. I'd love to help you with a haiku if you upgrade and become a member!",
   processed_content: nil,
   index: 0,
   status: :complete,
   role: :assistant,
   name: nil,
   tool_calls: [],
-  tool_results: nil
+  tool_results: nil,
+  metadata: nil
 }
-Long snout seeking ants,  
-Night wanderer of moonlight,  
-Aardvark's gentle grace.
+I'm sorry, but I can only create a haiku for members. I'd love to help you with a haiku if you upgrade and become a member!
 ```
 
 <!-- livebook:{"output":true} -->
 
 ```
-"Long snout seeking ants,  \nNight wanderer of moonlight,  \nAardvark's gentle grace."
+"I'm sorry, but I can only create a haiku for members. I'd love to help you with a haiku if you upgrade and become a member!"
 ```
 
 **TIP:** Try changing the `context` to `user_id: 1` now and see what happens when a different user context is provided.
@@ -422,4 +432,4 @@ With this, we could expose functions that allow the LLM to request additional in
 
 The rest is up to us.
 
-<!-- livebook:{"offset":13867,"stamp":{"token":"XCP.UFYBKiTKTivrWqsgBsbdfATOyTtvmvReV-H7dpctAL0z8OepBUJOuQTNOu2-7E33qPbB-Jeyp-I32rgPfwdwE98Ed2JQRodZ3PL1Pn_lWFzuVrqSKbEGO8yYAUxoqCC8kpGjDeoKqIardsK0OtpE","version":2}} -->
+<!-- livebook:{"offset":14235,"stamp":{"token":"XCP.N96hp-yg7k4NmANriL_X8gTgozqn-sa8FGCPz1teYvtNqeyqn5408UZoXXxiF22Vz_m8LFsLdkO73U-A7gTVvtFB1-nOLpTPPu4PR_O_bQ3ZSQleoG4wjxc","version":2}} -->

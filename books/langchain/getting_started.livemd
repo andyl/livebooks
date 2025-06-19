@@ -59,7 +59,8 @@ Let's create a system message followed by a user message.
   ])
   |> LLMChain.run()
 
-updated_chain.last_message.content
+# updated_chain.last_message.content
+IO.inspect(updated_chain)
 ```
 
 Here's the answer it gave me when I ran it:
@@ -125,4 +126,4 @@ Finally, once the full message is received, the chain's `on_message_processed` c
 
 With the basics covered, you're ready to start integrating an LLM into your Elixir application! Check out other notebooks for more specific examples and other ways to use it.
 
-<!-- livebook:{"offset":4654,"stamp":{"token":"XCP.i78jbBuPatFHM44quDBAU4hgc6ay4m6vFYa2oeCvONoMt0BoNyGTfJYcVJQVQuY1rU0KY3XceHNz07WamDRWUW60TxM82sMwVt99AzMKnXbiI-GAzL4fJhKlGsVBAX0NB0zACWWvoFi4eVu2RsMi","version":2}} -->
+<!-- livebook:{"offset":4682,"stamp":{"token":"XCP.lMS2z_RhOUhdX_RxVg5uXuyQ9X1Vd3n7DF0OZbbaik4yn9ij2QUFMioXwGGL1wyVq9CuXLQpiIPvIX3Ohy7Ti7s2Di-mZ7H3m8idDuqHrjEXGjTRczcQdCskSpk","version":2}} -->
