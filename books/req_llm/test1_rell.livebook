@@ -1,0 +1,378 @@
+# ReqLLM Demonstration
+
+```elixir
+Mix.install([
+  {:zoi, "0.8.1"},
+  {:req_llm, github: "agentjido/req_llm", ref: "main"},
+  {:kino, "~> 0.17.0"}
+])
+```
+
+## Intro / Configuration
+
+[req_llm](https://github.com/agentjido/req_llm) is a new library wrapping [Req](https://hexdocs.pm/req/Req.html), with support for interactions with many LLMs in a single package.
+
+This demonstration Livebook requires access to an LLM provider.
+I'm using Anthropic, but you can explore the other options including locally hosted options via lmstudio.
+
+In this Livebook, use the lock menu on the left to create a secret called `ANTHROPIC_API_KEY`.
+
+### A Note on Costs
+
+Running this Livebook will incur some model usage costs. If you'd like to reduce token usage, consider running with a cheaper or local model.
+
+```elixir
+# Set the Anthropic API key
+ReqLLM.put_key(:anthropic_api_key, System.fetch_env!("LB_ANTHROPIC_API_KEY"))
+```
+
+Let's see which providers are supported by `req_llm`:
+
+```elixir
+ReqLLM.Provider.Registry.list_providers()
+```
+
+Model details are stored in the package: including pricing, capabilitites, modalities, and token limits. These can be re-synced from [models.dev](https://models.dev) via a `mix` task (`mix req_llm.model_sync`) outside of a Livebook context.
+
+```elixir
+# List Anthropic Models
+{:ok, models} = ReqLLM.Provider.Registry.list_models(:anthropic)
+
+Kino.render(models)
+
+# # Show the details of a specific model, and store it for usage throughout the Livebook
+{:ok, model} =
+  ReqLLM.Provider.Registry.get_model(
+    :anthropic,
+    "claude-haiku-4-5-20251001"
+  )
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## The Basics
+
+The most basic way to use `req_llm` is to pass a model and some text to [`generate_text`](https://hexdocs.pm/req_llm/ReqLLM.html#generate_text/3).
+
+Models can be:
+
+* Instances of `ReqLLM.Model` (like the `claude-haiku-4-5-20251001` example above)
+* A colon-delimited string (`anthropic:claude-haiku-4-5-20251001`)
+* A tuple with provider, model, and options (`{:anthropic, "claude-haiku-4-5-20251001", max_tokens: 1000}`)
+
+Let's generate some basic markdown output by asking the model about itself:
+
+```elixir
+ReqLLM.generate_text!(model, "Who are you?")
+|> Kino.Markdown.new()
+```
+
+If that example wasn't fast enough, you might have `options`.
+
+Interactions with LLMs through `req_llm` support a `provider_options` keyword list.
+Some providers expose the list of options they support through a `supported_provider_options` method.
+
+```elixir
+ReqLLM.Providers.Anthropic.supported_provider_options()
+```
+
+To make the experience feel live, users might expect tokens to stream in during an interaction.
+
+`req_llm` supports a streaming mode with the [`stream_text`](https://hexdocs.pm/req_llm/ReqLLM.html#stream_text/3) function. This returns an object that can be used to stream tokens, return the final result, and even calculate the usage in token count with calculated costs.
+
+I'm using a [Kino Markdown frame](https://hexdocs.pm/kino/Kino.Markdown.html) for highlighting, but you can use the token stream like any other Elixir enumerable.
+
+We'll set the reasoning effort to low to speed up generation, since we're just asking for facts and not trying to do any intense planning.
+
+```elixir
+output_frame = Kino.Frame.new()
+Kino.render(output_frame)
+
+{:ok, response} =
+  ReqLLM.stream_text(
+    model,
+    "Write a short markdown-formatted report on the history of the Shure SM7B microphone.",
+    provider_options: [reasoning_effort: :low]
+  )
+
+response
+|> ReqLLM.StreamResponse.tokens()
+|> Enum.reduce("", fn new_values, accumulator ->
+  accumulator = accumulator <> new_values
+
+  Kino.Frame.render(output_frame, Kino.Markdown.new(accumulator))
+
+  accumulator
+end)
+
+ReqLLM.StreamResponse.usage(response)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Message Context
+
+Most production LLM interactions are more than a single request, instead containing multi-turn interactions between the system, the user, tools, and the assistant.
+
+These are modeled in `req_llm` using [the `Context` module](https://hexdocs.pm/req_llm/ReqLLM.Context.html).
+
+For example, let's have the LLM act as a social media manager to craft a short AI influencer post. The world obviously needs more of this slop.
+
+```elixir
+social_media_user_prompt =
+  Kino.Input.textarea("User Prompt", default: "I need a hot take on agentic AI")
+```
+
+```elixir
+context = ReqLLM.Context.new([
+  ReqLLM.Context.system("""
+  You are a social media manager working to grow the audience of your clients.
+  They'll give you a topic and you're responsible for producing a brief, catchy social media post.
+  """),
+  ReqLLM.Context.user(Kino.Input.read(social_media_user_prompt))
+])
+
+{:ok, response} =
+  ReqLLM.stream_text(model, context)
+
+full_social_response = response
+|> ReqLLM.StreamResponse.tokens()
+|> Enum.reduce("", fn values, acc ->
+  acc = acc <> values
+  IO.write(values)
+
+  acc
+end)
+```
+
+We can extend contexts to enable back and forth conversations.
+
+```elixir
+reply = Kino.Input.textarea("Your reply", default: "Make it sound more pretentious")
+```
+
+```elixir
+context =
+  ReqLLM.Context.append(
+    context,
+    ReqLLM.Context.user(Kino.Input.read(reply))
+  )
+
+{:ok, response} =
+  ReqLLM.stream_text(model, context)
+
+response
+|> ReqLLM.StreamResponse.tokens()
+|> Enum.each(fn values ->
+  IO.write(values)
+end)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Generate Object
+
+It's also possible to use `req_llm` to generate structured object outputs with the [`generate_object`](https://hexdocs.pm/req_llm/ReqLLM.html#generate_object/4) family of functions.
+
+This supports a specification in the [`NimbleOptions`](https://hexdocs.pm/nimble_options/NimbleOptions.html) format, which is used throughout many Elixir applications.
+
+```elixir
+character = [
+  name: [type: :string, required: true],
+  role: [type: {:in, [:antagonist, :protagonist, :side_character]}, required: true],
+  description: [type: :string, required: true]
+]
+
+ReqLLM.generate_object!(
+  model,
+  "Extract details of Shakespeare's Juliet",
+  character
+)
+```
+
+It's also possible to provide a JSON Schema, if you need to specify a structure that isn't articulable in NimbleOptions.
+
+```elixir
+summary = %{
+  type: "object",
+  properties: %{
+    name: %{
+      type: "string"
+    },
+    characters: %{
+      type: "array",
+      items: %{
+        type: "object",
+        properties: %{
+          name: %{
+            type: "string"
+          },
+          description: %{
+            type: "string"
+          },
+          role: %{
+            type: "string",
+            enum: [
+              "antagonist",
+              "protagonist",
+              "side_character"
+            ]
+          }
+        },
+        required: [
+          "name",
+          "description",
+          "role"
+        ]
+      }
+    }
+  },
+  required: [
+    "name",
+    "characters"
+  ]
+}
+
+ReqLLM.generate_object!(
+  model,
+  "Extract details of Shakespeare's Hamlet",
+  summary
+)
+```
+
+ReqLLM now includes support for [Zoi](https://hexdocs.pm/zoi/readme.html), a powerful schema validation library inspired by Zod and Joi. This makes it easier to construct the object definitions for tool calls.
+
+```elixir
+summary_schema =
+  Zoi.object(%{
+    name: Zoi.string(),
+    characters:
+      Zoi.array(
+        Zoi.object(%{
+          name: Zoi.string(),
+          description: Zoi.string(),
+          role: Zoi.enum(["antagonist", "protagonist", "side_character"])
+        })
+      )
+  })
+
+ReqLLM.generate_object!(
+  "anthropic:claude-haiku-4-5-20251001",
+  "Extract details of Blade Runner",
+  summary_schema
+)
+```
+
+<!-- livebook:{"branch_parent_index":0} -->
+
+## Tool Use
+
+`req_llm` supports tool use, defining parameters as NimbleOptions keyword lists.
+
+For example, an LLM can be given a tool to look up exchange rates via an API offered by the US Treasury.
+
+The library validates schemas before passing the arguments on to the tool.
+
+```elixir
+defmodule TreasuryAPI do
+  def exchange_rate_history(%{country: country}) do
+    Req.get(
+      "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v1/accounting/od/rates_of_exchange",
+      params: [
+        fields: "country_currency_desc,exchange_rate,record_date",
+        sort: "-record_date",
+        filter: "country:eq:#{country}"
+      ]
+    )
+    |> case do
+      {:ok, %{body: %{"data" => rates}}} ->
+        {:ok, rates}
+
+      _ ->
+        :error
+    end
+  end
+end
+
+{:ok, exchange_tool} =
+  ReqLLM.Tool.new(
+    name: "fetch_exchange_history",
+    description:
+      "Fetch historical exchange rates between USD and the currency of the provided country.",
+    parameter_schema: [
+      country: [
+        type: :string,
+        required: true,
+        doc: "The name of the country, in title case. For example, Japan or United Kingdom"
+      ]
+    ],
+    callback: {TreasuryAPI, :exchange_rate_history}
+  )
+
+ReqLLM.Tool.execute(exchange_tool, %{country: "Japan"})
+```
+
+These tools can be passed to generate functions, like `generate_text`.
+
+The application is then expected to consume the tool calls and integrate the results into the conversation. I imagine this interface will evolve and be simplified over time.
+
+```elixir
+system_prompt = """
+You are a helpful AI assistant with access to tools.
+
+Always use tools when appropriate and provide clear, helpful responses.
+"""
+
+context =
+  ReqLLM.Context.new([
+    ReqLLM.Context.system(system_prompt),
+    ReqLLM.Context.user(
+      "Compare Canadian and Japanese exchange rate trends over the last couple of years. Provide a markdown report with your findings."
+    )
+  ])
+
+tools = [exchange_tool]
+
+run_tools = fn response ->
+  response.context.messages
+  |> Enum.flat_map(fn msg -> msg.tool_calls || [] end)
+  |> Enum.map(fn %{function: function} = tool_call ->
+    tool = Enum.find(tools, &(&1.name == function.name))
+    {:ok, result} = ReqLLM.Tool.execute(tool, JSON.decode!(function.arguments))
+    IO.puts("#{inspect(tool_call)}: #{inspect(result)}")
+
+    {tool_call.id, result}
+  end)
+  |> Enum.reduce(response.context, fn {id, result}, context ->
+    ReqLLM.Context.append(
+      context,
+      ReqLLM.Context.tool_result(id, JSON.encode!(result))
+    )
+  end)
+end
+
+# Give the agent the opportunity to call tools
+{:ok, response} = ReqLLM.generate_text(model, context, tools: tools)
+
+context = run_tools.(response)
+
+# Render the result, after integrating tool results into context
+output_frame = Kino.Frame.new()
+Kino.render(output_frame)
+
+{:ok, response} =
+  ReqLLM.stream_text(model, context)
+
+response
+|> ReqLLM.StreamResponse.tokens()
+|> Enum.reduce("", fn new_values, accumulator ->
+  accumulator = accumulator <> new_values
+
+  Kino.Frame.render(output_frame, Kino.Markdown.new(accumulator))
+
+  accumulator
+end)
+
+# Report usage
+ReqLLM.StreamResponse.usage(response)
+```
