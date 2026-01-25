@@ -2,8 +2,7 @@
 
 ```elixir
 Mix.install([
-  {:zoi, "0.8.1"},
-  {:req_llm, github: "agentjido/req_llm", ref: "main"},
+  {:req_llm, "~> 1.3"},
   {:kino, "~> 0.17.0"}
 ])
 ```
@@ -23,7 +22,7 @@ Running this Livebook will incur some model usage costs. If you'd like to reduce
 
 ```elixir
 # Set the Anthropic API key
-ReqLLM.put_key(:anthropic_api_key, System.fetch_env!("LB_ANTHROPIC_API_KEY"))
+# ReqLLM.put_key(:anthropic_api_key, System.fetch_env!("ANTHROPIC_API_KEY"))
 ```
 
 Let's see which providers are supported by `req_llm`:
