@@ -1,0 +1,33 @@
+# LLMDB Basics
+
+```elixir
+Mix.install([
+  {:llm_db, "~> 2026.1"},
+  {:kino, "~> 0.18.0"}
+])
+```
+
+## Intro / Configuration
+
+[LLMDB](https://github.com/agentjido/llm_db) is a support library for  [ReqLLM](https://github.com/agentjido/llm_db), a database of LLM providers.
+
+```elixir
+LLMDB.providers() |> Enum.map(&(&1.id))
+```
+
+```elixir
+LLMDB.providers() |> Enum.filter(&(&1.id == :anthropic)) |> List.first()
+```
+
+```elixir
+models = LLMDB.models(:anthropic) |> Enum.map(&(&1.model))
+```
+
+Model details are stored in the package: including pricing, capabilitites, modalities, and token limits. These can be re-synced from [models.dev](https://models.dev) via a `mix` task (`mix req_llm.model_sync`) outside of a Livebook context.
+
+```elixir
+# Show the details of a specific model, and store it for usage throughout the Livebook
+{:ok, model} = LLMDB.model(:anthropic, "claude-haiku-4-5")
+```
+
+<!-- livebook:{"offset":890,"stamp":{"token":"XCP.k4M5bALhrVCAlUiO3YZ-zdgDa6xWCwZx_8FkCVkC0cenN0T_z9vmTSEoNhUw1nquCOZGugjWISTixGv7OliMM4CLg7H-tt-r3BjomMJLpRTmi8fjd5eVgXCAkho","version":2}} -->
