@@ -1,0 +1,27 @@
+# NxDemo
+
+## Section
+
+```elixir
+Mix.install(
+  [:nx, :exla],
+  config: [
+    nx: [
+      default_backend: {EXLA.Backend, client: :cuda},
+      default_defn_options: [compiler: EXLA, client: :cuda]
+    ],
+    exla: [
+      clients: [
+        cuda: [platform: :cuda, preallocate: false],
+        host: [platform: :host]
+      ]
+    ]
+  ]
+)
+
+a = Nx.tensor([1,2,3])
+b = Nx.tensor([10, 20, 30])
+
+Nx.add(a, b) |> Nx.to_flat_list() |> IO.inspect(label: "HELLO")
+
+```
