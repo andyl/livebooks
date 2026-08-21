@@ -1,0 +1,162 @@
+# Inflation
+
+```elixir
+Mix.install([
+  {:fred, "~> 0.5.0"},
+  {:vega_lite, "~> 0.1.11"},
+  {:kino_vega_lite, "~> 0.1.13"}
+])
+```
+
+## Introuction
+
+[<- Back to index](../index.livemd#livebook-files)
+
+```elixir
+require Explorer.DataFrame
+
+alias VegaLite, as: Vl
+alias Explorer.DataFrame
+alias Explorer.Series
+
+# API key pulled from Livebook secrets
+Application.put_env(:fred, :api_key, System.fetch_env!("LB_FRED_API_KEY"))
+
+# Attach the default logger to keep an eye on requests
+Fred.Telemetry.Logger.attach(level: :info)
+
+# Set the start date
+observation_start = ~D[1960-01-01]
+
+# Stock market turnover ratio series IDs
+recession_series = "USREC"
+
+cpi_series = %{
+  "CPILFESL" => "core_cpi_series",
+  "CPIAUCSL" => "cpi_series"
+}
+
+:ok
+```
+
+```elixir
+# Fetch metadata on the unemployment series and output it
+Enum.each(cpi_series, fn {series_id, _name} ->
+  {:ok, %{"seriess" => [metadata | _]}} = Fred.Series.get(series_id)
+
+  # Print out some of the metadata from the series
+  IO.puts("""
+  Title:       #{metadata["title"]}
+  Frequency:   #{metadata["frequency"]}
+  Units:       #{metadata["units"]}
+  Seasonal:    #{metadata["seasonal_adjustment"]}
+  Last Update: #{metadata["last_updated"]}
+  """)
+end)
+
+:ok
+```
+
+<!-- livebook:{"output_size":"full"} -->
+
+```elixir
+# Fetch the time series for the stock market turnover as a DataFrame
+data_frame =
+  cpi_series
+  |> Enum.map(fn {series_id, _name} -> series_id end)
+  |> Fred.Series.observations_as_data_frame(
+    observation_start: observation_start,
+    frequency: :a,
+    rename: cpi_series
+  )
+  |> DataFrame.mutate(
+    previous_core_cpi: Series.shift(core_cpi_series, 1),
+    previous_cpi: Series.shift(cpi_series, 1)
+  )
+  |> DataFrame.mutate(
+    core_cpi: (core_cpi_series - previous_core_cpi) / previous_core_cpi * 100,
+    cpi: (cpi_series - previous_cpi) / previous_cpi * 100
+  )
+  |> DataFrame.pivot_longer(
+    ["core_cpi", "cpi"],
+    select: ["date"],
+    values_to: "rate_of_change",
+    names_to: "series"
+  )
+  |> DataFrame.sort_by(asc: date)
+
+min_date = Series.min(data_frame["date"])
+max_date = Series.max(data_frame["date"])
+
+Kino.DataTable.new(data_frame)
+```
+
+```elixir
+# Fetch the recession indicator for the same date range
+{:ok, %{"observations" => recession_data}} =
+  Fred.Series.observations(recession_series,
+    observation_start: observation_start,
+    frequency: :m
+  )
+
+recession_periods =
+  recession_data
+  |> Enum.flat_map(fn
+    %{"value" => "."} ->
+      []
+
+    %{"value" => value, "date" => date} ->
+      [{Date.from_iso8601!(date), value}]
+  end)
+  |> Enum.chunk_by(fn {_date, value} -> value end)
+  |> Enum.flat_map(fn
+    [{_date, "0"} | _] ->
+      []
+
+    data ->
+      [Enum.map(data, fn {date, _value} -> date end)]
+  end)
+  |> Enum.map(fn chunk ->
+    {start, stop} =
+      Enum.min_max_by(chunk, fn date -> date end, Date)
+
+    %{start: start, stop: stop}
+  end)
+
+:ok
+```
+
+<!-- livebook:{"output_size":"wide"} -->
+
+```elixir
+# Plot the two separate series
+[
+  width: 700,
+  height: 400,
+  title: "Core CPI Versus CPI (#{min_date} - #{max_date})"
+]
+|> Vl.new()
+|> Vl.layers([
+  Vl.new()
+  |> Vl.data_from_values(recession_periods)
+  |> Vl.mark(:rect, color: "#3f3f46", opacity: 0.25)
+  |> Vl.encode_field(:x, "start", type: :temporal)
+  |> Vl.encode_field(:x2, "stop", type: :temporal),
+  Vl.new()
+  |> Vl.data_from_values(data_frame)
+  |> Vl.mark(:line, tooltip: true, color: "#2563eb")
+  |> Vl.encode_field(:x, "date",
+    type: :temporal,
+    title: "Date",
+    axis: [format: "%Y"]
+  )
+  |> Vl.encode_field(:y, "rate_of_change",
+    type: :quantitative,
+    title: "Percent",
+    scale: [zero: false]
+  )
+  |> Vl.encode_field(:color, "series", type: :nominal)
+])
+```
+
+<!-- livebook:{"offset":3674,"stamp":{"token":"XCP.alH7ckd9gv5iuIrmGm9jTDoRBqc6CBSgAS4fcczioB1Wk8DQu9cmq4fjkHx7Uk5XTX4D33EUS9t_uz7y5RdmVkBCPgFX-2qNGQ587px8cM87Jo_48mPo","version":2}} -->

@@ -1,0 +1,139 @@
+# Visualizing GDP
+
+```elixir
+Mix.install([
+  {:fred, "~> 0.5.0"},
+  {:vega_lite, "~> 0.1.11"},
+  {:kino_vega_lite, "~> 0.1.13"}
+])
+```
+
+## Introduction
+
+[<- Back to index](../index.livemd#livebook-files)
+
+```elixir
+alias VegaLite, as: Vl
+
+# API key pulled from Livebook secrets
+fred_api_key = System.fetch_env!("LB_FRED_API_KEY")
+Application.put_env(:fred, :api_key, fred_api_key)
+
+# Attach the default logger to keep an eye on requests
+Fred.Telemetry.Logger.attach(level: :info)
+
+# Set the start date for the series
+observation_start = ~D[1947-01-01]
+
+# Required Fred series IDs
+series = ["GDP", "GDPC1"]
+recession_series = "USREC"
+
+:ok
+```
+
+```elixir
+formatted_observations =
+  Enum.flat_map(series, fn series_id ->
+    # Fetch metadata on the series and output it
+    {:ok, %{"seriess" => [metadata]}} = Fred.Series.get(series_id)
+
+    IO.puts("""
+    Title:       #{metadata["title"]}
+    Frequency:   #{metadata["frequency"]}
+    Units:       #{metadata["units"]}
+    Seasonal:    #{metadata["seasonal_adjustment"]}
+    Last Update: #{metadata["last_updated"]}
+    """)
+
+    # Fetch the time series for the series
+    {:ok, %{"observations" => observations}} =
+      Fred.Series.observations(series_id,
+        observation_start: observation_start,
+        frequency: :q
+      )
+
+    observations
+    |> Enum.reject(fn
+      %{"value" => "."} -> true
+      _ -> false
+    end)
+    |> Enum.map(fn %{"date" => date, "value" => value} ->
+      %{
+        date: Date.from_iso8601!(date),
+        value: String.to_float(value),
+        series: metadata["title"]
+      }
+    end)
+  end)
+
+# Get the min and max dates for the series
+{%{date: min_date}, %{date: max_date}} =
+  Enum.min_max_by(formatted_observations, &Map.fetch!(&1, :date), Date)
+
+:ok
+```
+
+```elixir
+# Fetch the recession indicator for the same date range
+{:ok, %{"observations" => recession_data}} =
+  Fred.Series.observations(recession_series,
+    observation_start: observation_start,
+    frequency: :m
+  )
+
+recession_periods =
+  recession_data
+  |> Enum.flat_map(fn
+    %{"value" => "."} ->
+      []
+
+    %{"value" => value, "date" => date} ->
+      [{Date.from_iso8601!(date), value}]
+  end)
+  |> Enum.chunk_by(fn {_date, value} -> value end)
+  |> Enum.flat_map(fn
+    [{_date, "0"} | _] ->
+      []
+
+    data ->
+      [Enum.map(data, fn {date, _value} -> date end)]
+  end)
+  |> Enum.map(fn chunk ->
+    {start, stop} =
+      Enum.min_max_by(chunk, fn date -> date end, Date)
+
+    %{start: start, stop: stop}
+  end)
+
+:ok
+```
+
+```elixir
+# Plot the two separate series
+[width: 700, height: 400, title: "Quarterly Real GDP Versus GDP (#{min_date} - #{max_date})"]
+|> Vl.new()
+|> Vl.layers([
+  # Gray recession bands
+  Vl.new()
+  |> Vl.data_from_values(recession_periods)
+  |> Vl.mark(:rect, color: "#3f3f46", opacity: 0.25)
+  |> Vl.encode_field(:x, "start", type: :temporal)
+  |> Vl.encode_field(:x2, "stop", type: :temporal),
+  Vl.new()
+  |> Vl.data_from_values(formatted_observations)
+  |> Vl.mark(:line, tooltip: true, color: "#2563eb")
+  |> Vl.encode_field(:x, "date",
+    type: :temporal,
+    title: "Date",
+    axis: [format: "%Y"]
+  )
+  |> Vl.encode_field(:y, "value",
+    type: :quantitative,
+    title: "Billions of Dollars"
+  )
+  |> Vl.encode_field(:color, "series", type: :nominal)
+])
+```
+
+<!-- livebook:{"offset":3264,"stamp":{"token":"XCP.Ap7LwEXLraaCDtls7ITXLebRuE1c0N5PwfQDDKtmK02mFBPdOD3EC7Pl1bk7VUqNXPpvsZ9QxL-zInc5aLDAD0UbDm8io4xW1kB4Vw15c8pYL92fB-Az","version":2}} -->

@@ -1,0 +1,69 @@
+# Simple Enum Vs Explorer Benchmark
+
+```elixir
+Mix.install([
+  {:explorer, "~> 0.12.0"},
+  {:kino_benchee, "~> 0.1.0"}
+])
+```
+
+## Introduction
+
+[<- Back to index](../index.livemd#livebook-files)
+
+```elixir
+defmodule BenchmarkTests do
+  def explorer_sort(df) do
+    Explorer.Series.sort(df)
+  end
+
+  def explorer_sum(df) do
+    Explorer.Series.sum(df)
+  end
+
+  def elixir_sort(list) do
+    Enum.sort(list)
+  end
+
+  def elixir_sum(list) do
+    Enum.sum(list)
+  end
+end
+```
+
+```elixir
+data = Enum.shuffle(1..5_000_000)
+series = Explorer.Series.from_list(data)
+```
+
+<!-- livebook:{"output_size":"full"} -->
+
+```elixir
+Benchee.run(
+  %{
+    "Explorer Sort" => fn ->
+      BenchmarkTests.explorer_sort(series)
+    end,
+    "Elixir Sort" => fn ->
+      BenchmarkTests.elixir_sort(data)
+    end
+  },
+  time: 10
+)
+```
+
+<!-- livebook:{"output_size":"full"} -->
+
+```elixir
+Benchee.run(
+  %{
+    "Explorer Sum" => fn ->
+      BenchmarkTests.explorer_sum(series)
+    end,
+    "Elixir Sum" => fn ->
+      BenchmarkTests.elixir_sum(data)
+    end
+  },
+  time: 10
+)
+```

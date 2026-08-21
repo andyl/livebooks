@@ -1,0 +1,147 @@
+# Volatility Index
+
+```elixir
+Mix.install([
+  {:fred, "~> 0.5.0"},
+  {:vega_lite, "~> 0.1.11"},
+  {:kino_vega_lite, "~> 0.1.13"}
+])
+```
+
+## Introuction
+
+[<- Back to index](../index.livemd#livebook-files)
+
+```elixir
+require Explorer.DataFrame
+
+alias VegaLite, as: Vl
+alias Explorer.DataFrame
+alias Explorer.Series
+
+# API key pulled from Livebook secrets
+Application.put_env(:fred, :api_key, System.fetch_env!("LB_FRED_API_KEY"))
+
+# Attach the default logger to keep an eye on requests
+Fred.Telemetry.Logger.attach(level: :info)
+
+# Set the start date
+observation_start = ~D[2000-01-01]
+
+# Stock market turnover ratio series IDs
+volatility_series = "VIXCLS"
+
+:ok
+```
+
+```elixir
+# Fetch metadata on the unemployment series and output it
+{:ok, %{"seriess" => [volatility_data | _]}} = Fred.Series.get(volatility_series)
+
+# Print out some of the metadata from the series
+IO.puts("""
+Title:       #{volatility_data["title"]}
+Frequency:   #{volatility_data["frequency"]}
+Units:       #{volatility_data["units"]}
+Seasonal:    #{volatility_data["seasonal_adjustment"]}
+Last Update: #{volatility_data["last_updated"]}
+""")
+```
+
+```elixir
+data_frame =
+  Fred.Series.observations_as_data_frame(
+    volatility_series,
+    observation_start: observation_start,
+    frequency: :d,
+    rename: %{volatility_series => "volatility"}
+  )
+
+min_date = Series.min(data_frame["date"])
+max_date = Series.max(data_frame["date"])
+
+Kino.DataTable.new(data_frame)
+```
+
+```elixir
+volitility_bands =
+  data_frame
+  |> DataFrame.mutate(
+    condition:
+      cond do
+        volatility < 15.0 -> "low"
+        volatility >= 15.0 and volatility < 30.0 -> "normal"
+        volatility >= 30.0 and volatility < 40.0 -> "high"
+        volatility >= 40.0 -> "extremely_high"
+      end
+  )
+  |> DataFrame.to_rows()
+  |> Enum.chunk_by(fn %{"condition" => condition} ->
+    condition
+  end)
+  |> Enum.map(fn consecutive_dates ->
+    condition =
+      consecutive_dates
+      |> List.first()
+      |> Map.fetch!("condition")
+
+    {start, stop} =
+      consecutive_dates
+      |> Enum.map(&Map.fetch!(&1, "date"))
+      |> Enum.min_max_by(
+        fn date ->
+          date
+        end,
+        Date
+      )
+
+    %{condition: condition, start: start, stop: stop}
+  end)
+```
+
+<!-- livebook:{"output_size":"wide"} -->
+
+```elixir
+conditions = [
+  {"low", "#fde047"},
+  {"normal", "#d97706"},
+  {"high", "#c2410c"},
+  {"extremely_high", "#991b1b"}
+]
+
+# Plot the two separate series
+[
+  width: 1000, 
+  height: 400,
+  title: "Volatility Index (#{min_date} - #{max_date})"
+]
+|> Vl.new()
+|> Vl.layers([
+  Vl.new()
+  |> Vl.data_from_values(volitility_bands)
+  |> Vl.mark(:rect, opacity: 0.25)
+  |> Vl.encode_field(:x, "start", type: :temporal)
+  |> Vl.encode_field(:x2, "stop")
+  |> Vl.encode_field(:color, "condition",
+    type: :nominal,
+    scale: %{
+      domain: Enum.map(conditions, fn {condition, _color} -> condition end),
+      range: Enum.map(conditions, fn {_condition, color} -> color end)
+    }
+  ),
+  Vl.new()
+  |> Vl.data_from_values(data_frame)
+  |> Vl.mark(:line, tooltip: true, color: "#2563eb")
+  |> Vl.encode_field(:x, "date",
+    type: :temporal,
+    title: "Date",
+    axis: [format: "%Y"]
+  )
+  |> Vl.encode_field(:y, "volatility",
+    type: :quantitative,
+    title: "Volatility"
+  )
+])
+```
+
+<!-- livebook:{"offset":3264,"stamp":{"token":"XCP.-Y25nLsxqoDLKqWpQFbCZwU7SDNboGywabgG4p1cMHXx8pfVPLO4wnrfI4xLnt0yDaprMbqQtOlTqx3Jz4gO6qjSVv-fCFQZk1Sz-EpPnrbrt-57MUbi","version":2}} -->

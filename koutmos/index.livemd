@@ -1,0 +1,58 @@
+<!-- livebook:{"file_entries":[{"name":"book_cover.jpg","type":"attachment"}]} -->
+
+# Elixir For Finance
+
+## Setup
+
+<a target="_blank" href="https://www.financialelixir.dev/">
+  <img
+    src="files/book_cover.jpg"
+    alt="Elixir For Finance Book Cover"
+    width="350"
+  />
+</a>
+
+<!-- livebook:{"break_markdown":true} -->
+
+Thank you for supporting the beta of Elixir For Finance! In order to get started, you will need to
+install Livebook. You can install Livebook by any of the methods outlined in the
+[Install Livebook](https://livebook.dev/#install) or by running the following in the terminal:
+
+```sh
+$ mix local.rebar --force
+$ mix local.hex --force
+$ mix escript.install hex livebook
+```
+
+After you have Livebook installed on your system, you can start the Livebook server and open
+up this document automatically by using the `start_livebook.sh` helper script found in the
+`livebook_files` directory.
+
+```sh
+$ ./start_livebook.sh
+```
+
+## Livebook Files
+
+Below is a listing of all of the Livebook files that come with this beta release along with a
+short description of what is inside each document. More will arrive as later chapters land:
+
+Chapter 1:
+
+* [Enum versus Explorer benchmark](chapter_1/enum_v_explorer_benchmark.livemd)
+* [Fetching data from FRED and Yahoo! Finance](chapter_1/fred_yfinance.livemd)
+
+Chapter 4:
+
+* [GDP](chapter_4/calculating_gdp.livemd)
+* [Unemployment rate](chapter_4/unemployment_rate.livemd)
+* [Stock market turnover ratio](chapter_4/stock_market_turnover.livemd)
+* [The Warren Buffet indicator](chapter_4/buffet_indicator.livemd)
+* [Inflation](chapter_4/inflation.livemd)
+* [Federal funds rate](chapter_4/federal_funds_rate.livemd)
+
+Chapter 5:
+
+* [US Market Indices](chapter_5/us_market_indexes.livemd)
+* [Volatility Index](chapter_5/volatility_index.livemd)
+* [US Dollar Index](chapter_5/us_dollar_index.livemd)

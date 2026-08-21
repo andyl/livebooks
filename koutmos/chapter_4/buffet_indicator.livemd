@@ -1,0 +1,169 @@
+# Warren Buffet Indicator
+
+```elixir
+Mix.install([
+  {:fred, "~> 0.5.0"},
+  {:vega_lite, "~> 0.1.11"},
+  {:kino_vega_lite, "~> 0.1.13"}
+])
+```
+
+## Introuction
+
+[<- Back to index](../index.livemd#livebook-files)
+
+```elixir
+require Explorer.DataFrame
+alias VegaLite, as: Vl
+
+# API key pulled from Livebook secrets
+Application.put_env(:fred, :api_key, System.fetch_env!("LB_FRED_API_KEY"))
+
+# Attach the default logger to keep an eye on requests
+Fred.Telemetry.Logger.attach(level: :info)
+
+# Set the start date
+observation_start = ~D[1974-01-01]
+
+# Stock market turnover ratio series IDs
+market_cap_series = "DDDM01USA156NWDB"
+recession_series = "USREC"
+
+:ok
+```
+
+```elixir
+# Fetch metadata on the unemployment series and output it
+{:ok, %{"seriess" => [metadata | _]}} = Fred.Series.get(market_cap_series)
+
+# Print out some of the metadata from the series
+IO.puts("""
+Title:       #{metadata["title"]}
+Frequency:   #{metadata["frequency"]}
+Units:       #{metadata["units"]}
+Seasonal:    #{metadata["seasonal_adjustment"]}
+Last Update: #{metadata["last_updated"]}
+""")
+
+:ok
+```
+
+```elixir
+# Fetch the time series for the stock market turnover as a DataFrame
+data_frame =
+  market_cap_series
+  |> Fred.Series.observations_as_data_frame(
+    observation_start: observation_start,
+    frequency: :a,
+    rename: %{market_cap_series => "buffet_indicator"}
+  )
+  |> Explorer.DataFrame.mutate(
+    condition:
+      cond do
+        buffet_indicator < 75.0 -> "undervalued"
+        buffet_indicator >= 75.0 and buffet_indicator < 90.0 -> "fairly_valued"
+        buffet_indicator >= 90.0 and buffet_indicator < 115.0 -> "slightly_overvalued"
+        buffet_indicator >= 115.0 and buffet_indicator < 120.0 -> "overvalued"
+        buffet_indicator >= 115.0 -> "considerably_overvalued"
+      end
+  )
+
+min_date = Explorer.Series.min(data_frame["date"])
+max_date = Explorer.Series.max(data_frame["date"])
+
+Kino.DataTable.new(data_frame)
+```
+
+```elixir
+# Fetch the recession indicator for the same date range
+{:ok, %{"observations" => recession_data}} =
+  Fred.Series.observations(recession_series,
+    observation_start: observation_start,
+    frequency: :m
+  )
+
+recession_periods =
+  recession_data
+  |> Enum.flat_map(fn
+    %{"value" => "."} ->
+      []
+
+    %{"value" => value, "date" => date} ->
+      [{Date.from_iso8601!(date), value}]
+  end)
+  |> Enum.chunk_by(fn {_date, value} -> value end)
+  |> Enum.flat_map(fn
+    [{_date, "0"} | _] ->
+      []
+
+    data ->
+      [Enum.map(data, fn {date, _value} -> date end)]
+  end)
+  |> Enum.map(fn chunk ->
+    {start, stop} =
+      Enum.min_max_by(chunk, fn date -> date end, Date)
+
+    %{start: start, stop: stop}
+  end)
+
+:ok
+```
+
+<!-- livebook:{"output_size":"wide"} -->
+
+```elixir
+conditions = [
+  {"undervalued", "#166534"},
+  {"fairly_valued", "#4ade80"},
+  {"slightly_overvalued", "#f97316"},
+  {"overvalued", "#f87171"},
+  {"considerably_overvalued", "#b91c1c"}
+]
+
+# Plot the two separate series
+Vl.new(width: 700, height: 400, title: "#{metadata["title"]} (#{min_date} - #{max_date})")
+|> Vl.data_from_values(data_frame)
+|> Vl.layers([
+  Vl.new()
+  |> Vl.data_from_values(recession_periods)
+  |> Vl.mark(:rect, color: "#3f3f46", opacity: 0.25)
+  |> Vl.encode_field(:x, "start", type: :temporal)
+  |> Vl.encode_field(:x2, "stop", type: :temporal),
+  Vl.new()
+  |> Vl.mark(:bar, opacity: 0.5, tooltip: true)
+  |> Vl.encode_field(:x, "date",
+    type: :temporal,
+    axis: [format: "%Y", label_angle: -45]
+  )
+  |> Vl.encode_field(:y, "buffet_indicator",
+    type: :quantitative,
+    title: metadata["units"]
+  )
+  |> Vl.encode_field(:color, "condition",
+    type: :nominal,
+    title: "Market Condition",
+    scale: [
+      domain: Enum.map(conditions, fn {condition, _color} -> condition end),
+      range: Enum.map(conditions, fn {_condition, color} -> color end)
+    ]
+  ),
+  Vl.new()
+  |> Vl.mark(:line,
+    tooltip: true,
+    color: "#2563eb",
+    opacity: 0.5,
+    line: [color: "#2563eb"]
+  )
+  |> Vl.encode_field(:x, "date",
+    type: :temporal,
+    title: "Date"
+  )
+  |> Vl.encode_field(:y, "buffet_indicator",
+    type: :quantitative,
+    title: metadata["units"],
+    scale: [zero: true]
+  )
+])
+```
+
+<!-- livebook:{"offset":4152,"stamp":{"token":"XCP.IYej4hwGUFBo_J5ERwi9Y9C_-BfheGUZIHfpG00W51E9SaH_c3ag_Xk6yBrHheGCmti0XWysR9YwTGiyS3e8MnZKHP-sSDB1nLNtOvXJCLL1b3MzEA8j","version":2}} -->

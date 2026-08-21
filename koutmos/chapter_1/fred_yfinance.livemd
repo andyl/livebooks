@@ -1,0 +1,35 @@
+# Fetch Data From FRED and yFinance
+
+```elixir
+Mix.install([
+  {:yfinance, "~> 0.6.0"},
+  {:fred, "~> 0.5.0"}
+])
+```
+
+## Introduction
+
+[<- Back to index](../index.livemd#livebook-files)
+
+```elixir
+fred_api_key = System.fetch_env!("LB_FRED_API_KEY")
+Application.put_env(:fred, :api_key, fred_api_key)
+
+"GDP"
+|> Fred.Series.observations_as_data_frame(frequency: :a)
+|> Explorer.DataFrame.print(limit: 5, limit_dots: :bottom)
+```
+
+<!-- livebook:{"output_size":"full"} -->
+
+```elixir
+"aapl"
+|> Yfinance.Ticker.history!(
+  Date.shift(Date.utc_today(), month: -1),
+  Date.utc_today()
+)
+|> Explorer.DataFrame.select(["date", "high", "low", "close"])
+|> Explorer.DataFrame.print(data_limit: 5, limit_dots: :bottom)
+```
+
+<!-- livebook:{"offset":711,"stamp":{"token":"XCP.Nde5PrpFwsaxY7Tmk152Nc7a5qFuqR4OnGcYBMXS-hCl_0lDZePv1WFlZdL9U31fc0Zp_wAStjAlQdK1epu0aTZFZrQmEuh0xE6BxZWNbeGtzbKpiwMM","version":2}} -->
