@@ -1,7 +1,5 @@
 # NxDemo
 
-## Section
-
 ```elixir
 Mix.install(
   [:nx, :exla],
@@ -18,7 +16,11 @@ Mix.install(
     ]
   ]
 )
+```
 
+## Section
+
+```elixir
 a = Nx.tensor([1,2,3])
 b = Nx.tensor([10, 20, 30])
 
