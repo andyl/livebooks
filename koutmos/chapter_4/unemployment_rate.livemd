@@ -145,5 +145,3 @@ recession_periods =
   )
 ])
 ```
-
-<!-- livebook:{"offset":3434,"stamp":{"token":"XCP.VOrOHI8xxMHm6GdqL2H6xcZMAwn3S9Lfpu-WKJCdlhccoDKULjxK-wNRRWQZDPYlGtyhKMFdOlIwjH-WF4wjMmbfuBsCk_QoWshGPGfsrBUr0NX9_IZ6","version":2}} -->

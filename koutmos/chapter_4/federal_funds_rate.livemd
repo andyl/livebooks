@@ -172,5 +172,3 @@ recession_periods =
 ])
 |> Vl.resolve(:scale, y: :independent)
 ```
-
-<!-- livebook:{"offset":4104,"stamp":{"token":"XCP.6m3M3W98-iDlLfKEGxXrf3Iy62bwiKh00hFzJTxCf7T_XGOTfi5vMIG_2kSgPZHwmAtJBfup0snucm3BDVKPAdlB7hQdW_5cp0fNPQBeoQsWe5bHwXIP","version":2}} -->

@@ -144,5 +144,3 @@ Vl.new(width: 1000, height: 400, title: "US Market Indexes (#{min_date} - #{max_
   |> Vl.encode_field(:color, "series", type: :nominal)
 ])
 ```
-
-<!-- livebook:{"offset":3322,"stamp":{"token":"XCP.Pz0e0YtJvPblet4vXZl8FeNVbalQfwMsa0CzKkrqq6VVVRzvEjOcgf5pU0klJGfubMORt7YvbFm1ILuxe6qQ4mvQJPinW8PAAeC2w_NSuuoxPsPUsYu1","version":2}} -->

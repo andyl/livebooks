@@ -32,4 +32,4 @@ Application.put_env(:fred, :api_key, fred_api_key)
 |> Explorer.DataFrame.print(data_limit: 5, limit_dots: :bottom)
 ```
 
-<!-- livebook:{"offset":711,"stamp":{"token":"XCP.Nde5PrpFwsaxY7Tmk152Nc7a5qFuqR4OnGcYBMXS-hCl_0lDZePv1WFlZdL9U31fc0Zp_wAStjAlQdK1epu0aTZFZrQmEuh0xE6BxZWNbeGtzbKpiwMM","version":2}} -->
+<!-- livebook:{"offset":711,"stamp":{"token":"XCP.yyQIBzhBlxqQnSP1WBhrYAuQfTf9n3IszHn3JP4Ao9eWMMNnKBohFJwo7tliNy3wVD_Erga1BVnfWfZEFTO8P4qJLfTSUqijAfOMITkl6BcxyHLb6ryK","version":2}} -->
