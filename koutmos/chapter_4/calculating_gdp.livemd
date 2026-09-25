@@ -135,3 +135,5 @@ recession_periods =
   |> Vl.encode_field(:color, "series", type: :nominal)
 ])
 ```
+
+<!-- livebook:{"offset":3265,"stamp":{"token":"XCP.jDDoxItnqn894ckiiRkFtTnVxPTQZG6nL7EKZQ9-yGUEaAK_KgbyzC3DPD-p6rz1pSvrga5JbRIoF2QjsD1n0qbo0HhYGitUPXFGVK2iPMrfDStt457Q","version":2}} -->

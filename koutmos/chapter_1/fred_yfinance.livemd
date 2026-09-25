@@ -1,10 +1,11 @@
 # Fetch Data From FRED and yFinance
 
 ```elixir
-Mix.install([
-  {:yfinance, "~> 0.6.0"},
-  {:fred, "~> 0.5.0"}
-])
+# Mix.install([
+#   {:yfinance, "~> 0.6.0"},
+#   {:fred, "~> 0.5.0"}
+# ])
+Mix.install([:yfinance, :fred])
 ```
 
 ## Introduction
@@ -15,8 +16,11 @@ Mix.install([
 fred_api_key = System.fetch_env!("LB_FRED_API_KEY")
 Application.put_env(:fred, :api_key, fred_api_key)
 
+IO.inspect(fred_api_key, label: "BING")
+
 "GDP"
 |> Fred.Series.observations_as_data_frame(frequency: :a)
+|> IO.inspect(lable: "TANG")
 |> Explorer.DataFrame.print(limit: 5, limit_dots: :bottom)
 ```
 
@@ -32,4 +36,4 @@ Application.put_env(:fred, :api_key, fred_api_key)
 |> Explorer.DataFrame.print(data_limit: 5, limit_dots: :bottom)
 ```
 
-<!-- livebook:{"offset":711,"stamp":{"token":"XCP.yyQIBzhBlxqQnSP1WBhrYAuQfTf9n3IszHn3JP4Ao9eWMMNnKBohFJwo7tliNy3wVD_Erga1BVnfWfZEFTO8P4qJLfTSUqijAfOMITkl6BcxyHLb6ryK","version":2}} -->
+<!-- livebook:{"offset":821,"stamp":{"token":"XCP.ZB1H92-JHyY46kqoXjp5sKfAWwel8v--eJxXepBIwapVaTiNSg4vI7-ZDMhkicOXAVUYPL3xOSRMXOjMb5RO28sCxql06Q3gXmQLlI_NBe4IeklnmYY6","version":2}} -->
